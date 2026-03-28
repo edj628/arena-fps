@@ -125,9 +125,19 @@ public class WeaponManager : MonoBehaviour
             _                                      => go.AddComponent<MachineGun>()
         };
 
-        weapon.playerCamera = playerCamera != null
-            ? playerCamera
-            : Camera.main;
+        weapon.playerCamera = playerCamera != null ? playerCamera : Camera.main;
+
+        // Add held weapon visuals
+        var visuals = go.AddComponent<WeaponVisuals>();
+        var visualStyle = type switch
+        {
+            WeaponPickup.WeaponType.MachineGun     => WeaponVisuals.WeaponStyle.MachineGun,
+            WeaponPickup.WeaponType.Shotgun        => WeaponVisuals.WeaponStyle.Shotgun,
+            WeaponPickup.WeaponType.Railgun        => WeaponVisuals.WeaponStyle.Railgun,
+            WeaponPickup.WeaponType.RocketLauncher => WeaponVisuals.WeaponStyle.RocketLauncher,
+            _                                      => WeaponVisuals.WeaponStyle.MachineGun
+        };
+        visuals.Init(visualStyle);
 
         _slots[slot] = weapon;
         go.SetActive(false);

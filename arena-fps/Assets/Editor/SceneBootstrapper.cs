@@ -219,13 +219,13 @@ public static class SceneBootstrapper
         var mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
         if (mat.shader.name == "Hidden/InternalErrorShader")
             mat = new Material(Shader.Find("Standard"));
-        mat.color = type switch
+        mat.mainTexture = type switch
         {
-            WeaponPickup.WeaponType.MachineGun     => new Color(0.6f, 0.6f, 0.6f),
-            WeaponPickup.WeaponType.Shotgun        => new Color(0.8f, 0.5f, 0.1f),
-            WeaponPickup.WeaponType.Railgun        => new Color(0.2f, 0.6f, 1.0f),
-            WeaponPickup.WeaponType.RocketLauncher => new Color(1.0f, 0.2f, 0.1f),
-            _                                      => Color.white
+            WeaponPickup.WeaponType.MachineGun     => TextureGenerator.MachineGun(),
+            WeaponPickup.WeaponType.Shotgun        => TextureGenerator.Shotgun(),
+            WeaponPickup.WeaponType.Railgun        => TextureGenerator.Railgun(),
+            WeaponPickup.WeaponType.RocketLauncher => TextureGenerator.RocketLauncher(),
+            _                                      => null
         };
         go.GetComponent<Renderer>().material = mat;
 
