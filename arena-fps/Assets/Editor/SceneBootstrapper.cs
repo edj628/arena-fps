@@ -40,6 +40,12 @@ public static class SceneBootstrapper
         var player = BuildPlayer();
         player.transform.position = new Vector3(0f, 2f, 0f);
 
+        // Weapon pickups on the map
+        CreateWeaponPickup("Pickup_MachineGun",     WeaponPickup.WeaponType.MachineGun,     new Vector3( 6f, 1f,  6f));
+        CreateWeaponPickup("Pickup_Shotgun",        WeaponPickup.WeaponType.Shotgun,        new Vector3(-6f, 1f, -6f));
+        CreateWeaponPickup("Pickup_Railgun",        WeaponPickup.WeaponType.Railgun,        new Vector3( 0f, 7f,-10f)); // top platform
+        CreateWeaponPickup("Pickup_RocketLauncher", WeaponPickup.WeaponType.RocketLauncher, new Vector3(-8f, 5f,  8f)); // elevated platform
+
         // Settings Manager
         var smGo = new GameObject("SettingsManager");
         smGo.AddComponent<SettingsManager>();
@@ -81,8 +87,9 @@ public static class SceneBootstrapper
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvasGo.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         canvasGo.AddComponent<GraphicRaycaster>();
-        new GameObject("EventSystem").AddComponent<UnityEngine.EventSystems.EventSystem>()
-            .gameObject.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
+        var esGo = new GameObject("EventSystem");
+        esGo.AddComponent<UnityEngine.EventSystems.EventSystem>();
+        esGo.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
 
         // ── Main Panel ──────────────────────────────────────────────
         var mainPanel = CreatePanel("MainPanel", canvasGo.transform, Color.clear);
@@ -134,13 +141,6 @@ public static class SceneBootstrapper
         so.FindProperty("gameSceneName").stringValue = "TestScene";
         so.ApplyModifiedPropertiesWithoutUndo();
 
-        // Button listeners
-        btnNewGame .GetComponent<Button>().onClick.AddListener(menuUI.OnNewGame);
-        btnLoadGame.GetComponent<Button>().onClick.AddListener(menuUI.OnLoadGame);
-        btnSettings.GetComponent<Button>().onClick.AddListener(menuUI.OnSettings);
-        btnQuit    .GetComponent<Button>().onClick.AddListener(menuUI.OnQuit);
-        btnBack    .GetComponent<Button>().onClick.AddListener(menuUI.OnSettingsBack);
-
         SaveScene("Assets/_Project/Scenes/MainMenu.unity");
     }
 
@@ -187,7 +187,53 @@ public static class SceneBootstrapper
         soSetup.FindProperty("cameraRig").objectReferenceValue = camHolder;
         soSetup.ApplyModifiedPropertiesWithoutUndo();
 
+        // PlayerHealth
+        root.AddComponent<PlayerHealth>();
+
+        // WeaponManager
+        var weaponHolder = new GameObject("WeaponHolder");
+        weaponHolder.transform.SetParent(camHolder.transform);
+        weaponHolder.transform.localPosition = new Vector3(0.3f, -0.3f, 0.5f);
+
+        var weaponManager = root.AddComponent<WeaponManager>();
+        var soWm = new SerializedObject(weaponManager);
+        soWm.FindProperty("weaponHolder").objectReferenceValue = weaponHolder.transform;
+        soWm.FindProperty("playerCamera").objectReferenceValue = camGo.GetComponent<Camera>();
+        soWm.ApplyModifiedPropertiesWithoutUndo();
+
         return root;
+    }
+
+    private static void CreateWeaponPickup(string name, WeaponPickup.WeaponType type, Vector3 pos)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+        go.name = name;
+        go.transform.position   = pos;
+        go.transform.localScale = Vector3.one * 0.4f;
+
+        var mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+        if (mat.shader.name == "Hidden/InternalErrorShader")
+            mat = new Material(Shader.Find("Standard"));
+        mat.color = type switch
+        {
+            WeaponPickup.WeaponType.MachineGun     => new Color(0.6f, 0.6f, 0.6f),
+            WeaponPickup.WeaponType.Shotgun        => new Color(0.8f, 0.5f, 0.1f),
+            WeaponPickup.WeaponType.Railgun        => new Color(0.2f, 0.6f, 1.0f),
+            WeaponPickup.WeaponType.RocketLauncher => new Color(1.0f, 0.2f, 0.1f),
+            _                                      => Color.white
+        };
+        go.GetComponent<Renderer>().material = mat;
+
+        DestroyImmediate(go.GetComponent<CapsuleCollider>());
+        var col = go.AddComponent<SphereCollider>();
+        col.isTrigger = true;
+        col.radius    = 1.2f;
+
+        var pickup = go.AddComponent<WeaponPickup>();
+        var so = new SerializedObject(pickup);
+        so.FindProperty("weaponType").enumValueIndex = (int)type;
+        so.FindProperty("respawnTime").floatValue    = 30f;
+        so.ApplyModifiedPropertiesWithoutUndo();
     }
 
     private static GameObject CreateBox(string name, Vector3 pos, Vector3 scale, Color color)
