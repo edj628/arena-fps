@@ -24,7 +24,7 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Look")]
     [SerializeField] private Transform cameraHolder;
-    [SerializeField] private float mouseSensitivity = 0.15f;
+    [SerializeField] private float mouseSensitivity = 0.5f; // fallback if SettingsManager absent
     [SerializeField] private float maxLookAngle = 89f;
 
     private CharacterController _controller;
@@ -69,10 +69,14 @@ public class PlayerMovement : MonoBehaviour
 
     private void HandleLook()
     {
-        _pitch -= _lookInput.y * mouseSensitivity;
+        float sens = SettingsManager.Instance != null
+            ? SettingsManager.Instance.MouseSensitivity
+            : mouseSensitivity;
+
+        _pitch -= _lookInput.y * sens;
         _pitch = Mathf.Clamp(_pitch, -maxLookAngle, maxLookAngle);
         cameraHolder.localEulerAngles = new Vector3(_pitch, 0f, 0f);
-        transform.Rotate(Vector3.up, _lookInput.x * mouseSensitivity);
+        transform.Rotate(Vector3.up, _lookInput.x * sens);
     }
 
     // ---------------------------------------------------------------
@@ -103,10 +107,14 @@ public class PlayerMovement : MonoBehaviour
         wishDir.y = 0f;
         if (wishDir.sqrMagnitude > 1f) wishDir.Normalize();
 
+        float speed = SettingsManager.Instance != null
+            ? SettingsManager.Instance.MovementSensitivity
+            : walkSpeed;
+
         if (grounded)
-            Accelerate(wishDir, walkSpeed, walkSpeed * 10f);
+            Accelerate(wishDir, speed, speed * 10f);
         else if (!_isWallRunning)
-            Accelerate(wishDir, walkSpeed, airAcceleration); // strafe-jump air control
+            Accelerate(wishDir, speed, airAcceleration); // strafe-jump air control
 
         // Jump
         if (_jumpPressed && _jumpsRemaining > 0 && !_isWallRunning)
