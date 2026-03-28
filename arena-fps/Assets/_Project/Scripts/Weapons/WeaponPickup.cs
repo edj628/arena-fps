@@ -11,6 +11,12 @@ public class WeaponPickup : MonoBehaviour
     [SerializeField] private WeaponType weaponType;
     [SerializeField] private float respawnTime = 30f;
 
+    public void Init(WeaponType type, float respawn)
+    {
+        weaponType  = type;
+        respawnTime = respawn;
+    }
+
     private bool _available = true;
     private Renderer _renderer;
     private Collider _collider;

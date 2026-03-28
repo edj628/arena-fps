@@ -43,8 +43,13 @@ public static class SceneBootstrapper
         // Weapon pickups on the map
         CreateWeaponPickup("Pickup_MachineGun",     WeaponPickup.WeaponType.MachineGun,     new Vector3( 6f, 1f,  6f));
         CreateWeaponPickup("Pickup_Shotgun",        WeaponPickup.WeaponType.Shotgun,        new Vector3(-6f, 1f, -6f));
-        CreateWeaponPickup("Pickup_Railgun",        WeaponPickup.WeaponType.Railgun,        new Vector3( 0f, 7f,-10f)); // top platform
-        CreateWeaponPickup("Pickup_RocketLauncher", WeaponPickup.WeaponType.RocketLauncher, new Vector3(-8f, 5f,  8f)); // elevated platform
+        CreateWeaponPickup("Pickup_Railgun",        WeaponPickup.WeaponType.Railgun,        new Vector3( 0f, 7f,-10f));
+        CreateWeaponPickup("Pickup_RocketLauncher", WeaponPickup.WeaponType.RocketLauncher, new Vector3(-8f, 5f,  8f));
+
+        // Health & armor pickups
+        CreateHealthPickup("Pickup_Health",     HealthPickup.PickupType.Health,     new Vector3( 0f, 1f,  4f), 30f);
+        CreateHealthPickup("Pickup_Armor",      HealthPickup.PickupType.Armor,      new Vector3(-4f, 1f,  0f), 30f);
+        CreateHealthPickup("Pickup_MegaHealth", HealthPickup.PickupType.MegaHealth, new Vector3( 8f, 3f,  0f), 60f);
 
         // Settings Manager
         var smGo = new GameObject("SettingsManager");
@@ -224,7 +229,7 @@ public static class SceneBootstrapper
         };
         go.GetComponent<Renderer>().material = mat;
 
-        DestroyImmediate(go.GetComponent<CapsuleCollider>());
+        Object.DestroyImmediate(go.GetComponent<CapsuleCollider>());
         var col = go.AddComponent<SphereCollider>();
         col.isTrigger = true;
         col.radius    = 1.2f;
@@ -234,6 +239,33 @@ public static class SceneBootstrapper
         so.FindProperty("weaponType").enumValueIndex = (int)type;
         so.FindProperty("respawnTime").floatValue    = 30f;
         so.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    private static void CreateHealthPickup(string name, HealthPickup.PickupType type, Vector3 pos, float respawn)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        go.name = name;
+        go.transform.position   = pos;
+        go.transform.localScale = Vector3.one * 0.4f;
+
+        var mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+        if (mat.shader.name == "Hidden/InternalErrorShader")
+            mat = new Material(Shader.Find("Standard"));
+        mat.color = type switch
+        {
+            HealthPickup.PickupType.Health     => new Color(0.1f, 0.9f, 0.2f),
+            HealthPickup.PickupType.Armor      => new Color(0.2f, 0.8f, 1.0f),
+            HealthPickup.PickupType.MegaHealth => new Color(1.0f, 0.9f, 0.0f),
+            _                                  => Color.white
+        };
+        go.GetComponent<Renderer>().material = mat;
+
+        Object.DestroyImmediate(go.GetComponent<SphereCollider>());
+        var col = go.AddComponent<SphereCollider>();
+        col.isTrigger = true;
+        col.radius    = 1.2f;
+
+        go.AddComponent<HealthPickup>().Init(type, respawn);
     }
 
     private static GameObject CreateBox(string name, Vector3 pos, Vector3 scale, Color color)

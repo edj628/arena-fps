@@ -94,10 +94,7 @@ public class WeaponManager : MonoBehaviour
             dropGo.transform.localScale = Vector3.one * 0.4f;
 
             var pickup = dropGo.AddComponent<WeaponPickup>();
-            var so = new UnityEditor.SerializedObject(pickup);
-            so.FindProperty("weaponType").enumValueIndex = i;
-            so.FindProperty("respawnTime").floatValue = 30f;
-            so.ApplyModifiedPropertiesWithoutUndo();
+            pickup.Init((WeaponPickup.WeaponType)i, 30f);
 
             var rb = dropGo.AddComponent<Rigidbody>();
             rb.AddForce(Random.insideUnitSphere * 3f, ForceMode.Impulse);
